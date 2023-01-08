@@ -1,17 +1,18 @@
 import streamlit as st
-# from streamlit_autorefresh import st_autorefresh
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 from Kafka_Helpers import Consumer, Producer
-import time
 import ast
+import pandas as pd
+from pymongo import MongoClient
+import time
 import json
 import threading
-import pandas as pd
 
 header = st.empty()
 subheader = st.empty()
 cloud = st.empty()
+subheader2 = st.empty()
 list_count = st.empty()
 loading = False
 movie_id = 0
@@ -40,7 +41,6 @@ def write_movie_to_mongodb(value):
     o['reviews'] = ast.literal_eval(str(o['reviews']))
     
     if not check_if_movie_exists_in_mongodb(movie_id):
-        from pymongo import MongoClient
         client = MongoClient('localhost', 27017,
                         username='root',
                         password='rootpassword')
@@ -51,7 +51,6 @@ def write_movie_to_mongodb(value):
 
 def check_if_movie_exists_in_mongodb(movie_id):
     try:
-        from pymongo import MongoClient
         client = MongoClient('localhost', 27017,
                      username='root',
                      password='rootpassword')
@@ -66,7 +65,6 @@ def check_if_movie_exists_in_mongodb(movie_id):
         return False
 
 def load_movie_from_mongodb_if_exists(movie_id, default=(None, None)):
-    from pymongo import MongoClient
     client = MongoClient('localhost', 27017,
                     username='root',
                     password='rootpassword')
@@ -96,11 +94,13 @@ def get_wordcloud(text, counted_words):
         header.title(movie_title)
         subheader.subheader("Wordcloud for movie id: " + str(movie_id))
         cloud.pyplot(fig)
-        list_count.subheader("Top 30 most frequent words:")
+        subheader2.subheader("Top 30 most frequent words (without any filter):")
         # sort counted_words by value
         df = pd.DataFrame(counted_words, columns=['word', 'count'])
         df = df.sort_values(by=['count'], ascending=False)
         list_count.table(df.head(30))
+        # df without row index
+        list_count.dataframe(df.head(30), width=1000, height=1000, index=False)
     else:
         st.info(f"No reviews found for {movie_title} with id {movie_id}")
 
@@ -119,16 +119,15 @@ def prepare_sidebar():
     st.sidebar.write("(33, 77, 76600)")
     st.sidebar.markdown("---")
     button_most_pop = st.sidebar.button("Show most popular movie")
-    st.sidebar.markdown("---")
-    button_most_blabla = st.sidebar.button("Show most blabla movie")
+    button_most_pop_kids = st.sidebar.button("Show most popular kids movie")
     st.sidebar.markdown("---")
     button_clear_db = st.sidebar.button("Clear Cache-MongoDB")
-    return input_no, button_state, button_clear_db, button_most_pop, button_most_blabla
+    return input_no, button_state, button_clear_db, button_most_pop, button_most_pop_kids
 
 Consumer(server='localhost', port=29092, topic_name='adjectives_counted', handler=handle_message)
 my_producer = Producer(server='localhost', port=29092)
 
-input_no, button_state, button_clear_db, button_most_pop, button_most_blabla = prepare_sidebar()
+input_no, button_state, button_clear_db, button_most_pop, button_most_pop_kids = prepare_sidebar()
 
 if button_state or input_no:
     # check if input_no is a number
@@ -160,11 +159,10 @@ if button_state or input_no:
 if button_most_pop:
     st.sidebar.warning("Not implemented yet :sweat_smile:")
 
-if button_most_blabla:
+if button_most_pop_kids:
     st.sidebar.warning("Not implemented yet :sweat_smile:")
 
 if button_clear_db:
-    from pymongo import MongoClient
     client = MongoClient('localhost', 27017, username='root', password='rootpassword')
     db = client['movies']
     collection = db['reviews']
