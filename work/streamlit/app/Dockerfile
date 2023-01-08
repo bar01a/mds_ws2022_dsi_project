@@ -14,8 +14,8 @@ EXPOSE 8501
 WORKDIR /app
 
 COPY work/Kafka_Helpers.py Kafka_Helpers.py
-COPY work/streamlit/app/dsi_streamlit_app.py dsi_streamlit_app.py
+COPY work/streamlit/app/dsi_streamlit_app.py wordcloud_app.py
 COPY work/streamlit/app/requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
-ENTRYPOINT ["streamlit", "run", "dsi_streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "wordcloud_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
