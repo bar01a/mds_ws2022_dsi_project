@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+      - jupyter
+    container_name: zookeeper-container
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - jupyter
+    container_name: kafka-container
+    
+  redis:
+      image: redis:latest
+      networks:
+        - jupyter
+      container_name: redis-dictionary-container
+      ports:
+        - '6379:6379'
+      command: redis-server --save 60 1 --loglevel warning
+      volumes:
+        - redis_data:/data
+
+  jupyter:
+    image: jupyter/all-spark-notebook:python-3.10.6
+    ports:
+      - "40400:4040"
+      - "8890:8888"
+    environment:
+      - JUPYTER_TOKEN=pwd
+    volumes:
+      # set this path to the (absolute) path on your computer
+      # - /Absolute/Path/To/Where/Your/Notebook/Files/Will/Be/Saved:/home/jovyan/work
+      - ./work:/home/jovyan/work
+      - python-libraries:/opt/conda/lib/python3.10/site-packages
+    # the following volumes daclaration is used only for named anonymous storages
+    #  - jupyter-data:/home/jovyan/work
+    networks:
+      - jupyter
+    container_name: jupyter-container
+    
+  mongodb_container:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+    container_name: mongodb-container
+
+networks:
+  jupyter:
+    name: jupyter-network
+
+volumes:
+    redis_data:
+    python-libraries:
+  #  jupyter-data: {}
+    mongodb_data_container:
