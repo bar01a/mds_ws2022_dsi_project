@@ -2,3 +2,6 @@ streamlit
 wordcloud
 matplotlib
 kafka-python
+ast
+pandas
+pymongo
