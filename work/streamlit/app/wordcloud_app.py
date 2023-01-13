@@ -100,7 +100,7 @@ def get_wordcloud(text, counted_words):
         df = df.sort_values(by=['count'], ascending=False)
         list_count.table(df.head(30))
         # df without row index
-        list_count.dataframe(df.head(30), width=1000, height=1000, index=False)
+        list_count.dataframe(df.head(30), width=1000, height=1000)
     else:
         st.info(f"No reviews found for {movie_title} with id {movie_id}")
 
