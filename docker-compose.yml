@@ -8,7 +8,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - 22181:2181
+      - "22181:2181"
     networks:
       - jupyter
     container_name: zookeeper-container
@@ -18,7 +18,7 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - 29092:29092
+      - "29092:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -65,10 +65,31 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
     ports:
-      - 27017:27017
+      - "27017:27017"
     volumes:
       - mongodb_data_container:/data/db
-    container_name: mongodb-container
+    container_name: mongodb_container
+
+  dictionary:
+    build: work/dictionary_script
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - jupyter
+    container_name: dictionary
+
+  streamlit_app:
+    build: work/streamlit/app
+    depends_on:
+      - redis
+      - kafka
+      - mongodb_container
+    ports:
+      - "8501:8501"
+    networks:
+      - jupyter
+    container_name: streamlit_app
 
 networks:
   jupyter:

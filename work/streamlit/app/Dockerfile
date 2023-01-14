@@ -2,7 +2,7 @@
 
 # build the image
 # run command from the root of the project
-# docker build --no-chache -t dsi_streamlit_app -f .\work\streamlit\app\Dockerfile .
+# docker build --no-cache -t dsi_streamlit_app -f work/streamlit/app/Dockerfile work/streamlit/app
 
 # run the container
 # docker run -p 8501:8501 --net jupyter-network dsi_streamlit_app
@@ -13,9 +13,9 @@ EXPOSE 8501
 
 WORKDIR /app
 
-COPY work/Kafka_Helpers.py Kafka_Helpers.py
-COPY work/streamlit/app/dsi_streamlit_app.py wordcloud_app.py
-COPY work/streamlit/app/requirements.txt requirements.txt
+COPY Kafka_Helpers.py Kafka_Helpers.py
+COPY wordcloud_app.py wordcloud_app.py
+COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
 ENTRYPOINT ["streamlit", "run", "wordcloud_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
