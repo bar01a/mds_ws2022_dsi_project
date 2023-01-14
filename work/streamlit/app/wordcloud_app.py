@@ -41,7 +41,7 @@ def write_movie_to_mongodb(value):
     o['reviews'] = ast.literal_eval(str(o['reviews']))
     
     if not check_if_movie_exists_in_mongodb(movie_id):
-        client = MongoClient('localhost', 27017,
+        client = MongoClient('mongodb_container', 27017,
                         username='root',
                         password='rootpassword')
         db = client['movies']
@@ -51,7 +51,7 @@ def write_movie_to_mongodb(value):
 
 def check_if_movie_exists_in_mongodb(movie_id):
     try:
-        client = MongoClient('localhost', 27017,
+        client = MongoClient('mongodb_container', 27017,
                      username='root',
                      password='rootpassword')
         db = client['movies']
@@ -65,9 +65,9 @@ def check_if_movie_exists_in_mongodb(movie_id):
         return False
 
 def load_movie_from_mongodb_if_exists(movie_id, default=(None, None)):
-    client = MongoClient('localhost', 27017,
-                    username='root',
-                    password='rootpassword')
+    client = MongoClient('mongodb_container', 27017,
+                         username='root',
+                         password='rootpassword')
     db = client['movies']
     collection = db['reviews']
     res = collection.find_one({'movie_id': movie_id})
@@ -124,8 +124,8 @@ def prepare_sidebar():
     button_clear_db = st.sidebar.button("Clear Cache-MongoDB")
     return input_no, button_state, button_clear_db, button_most_pop, button_most_pop_kids
 
-Consumer(server='localhost', port=29092, topic_name='adjectives_counted', handler=handle_message)
-my_producer = Producer(server='localhost', port=29092)
+Consumer(server='kafka', port=9092, topic_name='adjectives_counted', handler=handle_message)
+my_producer = Producer(server='kafka', port=9092)
 
 input_no, button_state, button_clear_db, button_most_pop, button_most_pop_kids = prepare_sidebar()
 
@@ -163,7 +163,7 @@ if button_most_pop_kids:
     st.sidebar.warning("Not implemented yet :sweat_smile:")
 
 if button_clear_db:
-    client = MongoClient('localhost', 27017, username='root', password='rootpassword')
+    client = MongoClient('mongodb_container', 27017, username='root', password='rootpassword')
     db = client['movies']
     collection = db['reviews']
     collection.delete_many({})

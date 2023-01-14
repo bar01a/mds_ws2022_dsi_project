@@ -66,6 +66,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
     ports:
       - "27017:27017"
+    networks:
+      - jupyter
     volumes:
       - mongodb_data_container:/data/db
     container_name: mongodb_container
@@ -90,6 +92,14 @@ services:
     networks:
       - jupyter
     container_name: streamlit_app
+
+  movie_reviews:
+    build: work/movie_script
+    depends_on:
+      - kafka
+    networks:
+      - jupyter
+    container_name: movie_reviews
 
 networks:
   jupyter:
