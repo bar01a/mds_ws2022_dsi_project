@@ -74,6 +74,8 @@ services:
 
   dictionary:
     build: work/dictionary_script
+    command:
+      -d "wordnet" # possible strings are "wordnet", "nltk" or "wordnet_all"
     depends_on:
       - redis
       - kafka

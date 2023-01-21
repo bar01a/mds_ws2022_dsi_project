@@ -2,6 +2,7 @@ import re
 import os
 import redis
 import json
+import sys, getopt
 from Kafka_Helpers import Producer, Consumer
 
 # Natural Language Toolkit already offers many libraries regarding computer linguistics
@@ -82,14 +83,38 @@ def flush_and_fill_redis(redis_connection, adjectives_dict):
     assert redis_connection.get('excited') == 'excited'
     assert redis_connection.get('house') is None
 
-# all adjectives + markers
-#adjectives = read_word_net_dictionary("./data/adjectives_wordnet.adj", ['a', 'ip', 'p'], True)
 
-# without adjective satellites
-#adjectives = read_word_net_dictionary("./data/adjectives_wordnet.adj", [], False)
+adjectives = set()
 
-# using dictionary json
-adjectives  = read_nltk_extraction('./data/Dictionary JSON')
+
+# switch case
+def get_dataset(dataset):
+    return {
+        # using dictionary json
+        'nltk': read_nltk_extraction('./data/Dictionary JSON'),
+        # without adjective satellites
+        'wordnet': read_word_net_dictionary("./data/adjectives_wordnet.adj", [], False),
+        # all adjectives + markers
+        'wordnet_all': read_word_net_dictionary("./data/adjectives_wordnet.adj", ['a', 'ip', 'p'], True),
+    }.get(dataset, read_nltk_extraction('./data/Dictionary JSON'))
+
+
+clear_redis = False
+
+print(f"Arguments: {str(sys.argv)}")
+
+opts, args = getopt.getopt(sys.argv[1:], "d:c", ["dataset=","clear"])
+for opt, arg in opts:
+    if opt in ['-d', '--dataset']:
+        adjectives = get_dataset(arg)
+        clear_redis = True
+        print(f"Argument --dataset {arg} found. Got {len(adjectives)} adjectives and will refresh database.")
+    elif opt in ("-c", "--clear"):
+        clear_redis = True
+        print("Argument --clear found. Fill refresh database.")
+
+if len(adjectives) == 0:
+    adjectives = read_nltk_extraction('./data/Dictionary JSON')
 
 # preview
 print(list(adjectives)[0:10])
@@ -97,15 +122,14 @@ print(list(adjectives)[0:10])
 # create connection to redis db
 redis_conn = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
-if redis_conn.dbsize() == 0:
-    print('cleared and filled redis db')
+if clear_redis:
+    # clear and fill redis
     flush_and_fill_redis(redis_conn, adjectives)
 
 # fill blacklist if necessary
 blacklist = { }
 
 dictionary_producer = Producer('kafka', 9092)
-
 
 def subscribe_handler(key, value):
     print('got')
@@ -117,7 +141,8 @@ def subscribe_handler(key, value):
     # ignore result which is going to be a list of some sort of pipeline objects
     [pipe.get(word) for review in reviews for word in review]  # for each word call get on pipe
 
-    adjectives_in_reviews = set(pipe.execute())  # send pipe buffer at once and receive all adjectives in reviews
+    # send pipe buffer at once and receive all adjectives in reviews
+    adjectives_in_reviews = set(pipe.execute())
     adjectives_in_reviews.remove(None)
 
     # unfortunately, loop through reviews again otherwise the knowledge of which word belongs to which review is lost
