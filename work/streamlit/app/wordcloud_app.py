@@ -19,6 +19,21 @@ movie_id = 0
 movie_title = ""
 timeout_occurred = False
 
+# KAFKA CONFIG
+KAFKA_SERVER = 'localhost'
+KAFKA_PORT = 29092
+NEW_KAFKA_REQUEST_TOPIC = 'topic_A'
+
+# MONGODB CONFIG
+MONGO_SERVER = 'mongodb_container'
+MONGO_SERVER = 'localhost'
+MONGO_PORT = 27017
+MONGO_USERNAME = 'root'
+MONGO_PASSWORD = 'rootpassword'
+
+def get_mongo_client():
+    return MongoClient(MONGO_SERVER, MONGO_PORT, username=MONGO_USERNAME, password=MONGO_PASSWORD)
+
 def prepare_data(data, default=(None, None)):
     global movie_id, movie_title
     if data is not None:
@@ -35,43 +50,59 @@ def prepare_data(data, default=(None, None)):
         return default
 
 def write_movie_to_mongodb(value):
+    global movie_id, movie_title, counter
     o = json.loads(value)
     o['movie_id'] = str(o['movie_id']).replace("'", '').replace('[', '').replace(']', '')
     o['title'] = str(o['title']).replace("'", '').replace('[', '').replace(']', '')
-    o['reviews'] = ast.literal_eval(str(o['reviews']))
+    movie_title = o['title']
     
-    if not check_if_movie_exists_in_mongodb(movie_id):
-        client = MongoClient('mongodb_container', 27017,
-                        username='root',
-                        password='rootpassword')
+    if check_if_movie_exists_in_mongodb_by_title(o['title']) is False:
+        o['reviews'] = ast.literal_eval(str(o['reviews']))
+        client = get_mongo_client()
         db = client['movies']
         collection = db['reviews']
-        # text = text.replace("'", '"')
         collection.insert_one(o)
+        client.close()
 
 def check_if_movie_exists_in_mongodb(movie_id):
     try:
-        client = MongoClient('mongodb_container', 27017,
-                     username='root',
-                     password='rootpassword')
+        client = get_mongo_client()
         db = client['movies']
         collection = db['reviews']
         res = collection.find_one({'movie_id': str(movie_id)})
-        if res is not None:
-            return True
-        else:
-            return False
+        return (res is not None)
+    except:
+        return False
+
+def check_if_movie_exists_in_mongodb_by_title(title):
+    try:
+        client = get_mongo_client()
+        db = client['movies']
+        collection = db['reviews']
+        res = collection.find_one({'title': title})
+        return (res is not None)
     except:
         return False
 
 def load_movie_from_mongodb_if_exists(movie_id, default=(None, None)):
-    client = MongoClient('mongodb_container', 27017,
-                         username='root',
-                         password='rootpassword')
+    client = get_mongo_client()
     db = client['movies']
     collection = db['reviews']
     res = collection.find_one({'movie_id': movie_id})
     if res is not None:
+        return prepare_data(res, default)
+    else:
+        return default
+
+def load_movie_from_mongodb_by_title(title, default=(None, None)):
+    global movie_id, movie_title
+    client = get_mongo_client()
+    db = client['movies']
+    collection = db['reviews']
+    res = collection.find_one({'title': title})
+    if res is not None:
+        movie_id = res['movie_id']
+        movie_title = res['title']
         return prepare_data(res, default)
     else:
         return default
@@ -84,15 +115,15 @@ def handle_message(key, value):
     loading = False
 
 def get_wordcloud(text, counted_words):
-    # text, counted_words = load_text_from_file()
+    global movie_id, movie_title
+    header.title(movie_title)
+    subheader.subheader("Wordcloud for movie id: " + str(movie_id))
     if text is not None:
         wordcloud = WordCloud(max_words=20).generate(text)
 
         fig, ax = plt.subplots()
         ax.axis('off')
         ax.imshow(wordcloud, interpolation='bilinear')
-        header.title(movie_title)
-        subheader.subheader("Wordcloud for movie id: " + str(movie_id))
         cloud.pyplot(fig)
         subheader2.subheader("Top 30 most frequent words (without any filter):")
         # sort counted_words by value
@@ -102,7 +133,7 @@ def get_wordcloud(text, counted_words):
         # df without row index
         list_count.dataframe(df.head(30), width=1000, height=1000)
     else:
-        st.info(f"No reviews found for {movie_title} with id {movie_id}")
+        st.info(f'No reviews found for "{movie_title}" with id {movie_id}')
 
 def check_timeout(timeout, handler):
     time.sleep(timeout)
@@ -114,32 +145,32 @@ def set_timeout(new_state):
 
 def prepare_sidebar():
     st.sidebar.title("Movie Wordcloud Generator")
-    input_no = st.sidebar.text_input("Enter any movie-id :point_down:")
+    input_no = st.sidebar.text_input("Enter any movie-title :point_down:")
     button_state = st.sidebar.button("Show me the wordcloud!")
-    st.sidebar.write("(33, 77, 76600)")
+    # st.sidebar.write("(33, 77, 76600)")
     st.sidebar.markdown("---")
     button_most_pop = st.sidebar.button("Show most popular movie")
-    button_most_pop_kids = st.sidebar.button("Show most popular kids movie")
+    # button_most_pop_kids = st.sidebar.button("Show most popular kids movie")
     st.sidebar.markdown("---")
     button_clear_db = st.sidebar.button("Clear Cache-MongoDB")
-    return input_no, button_state, button_clear_db, button_most_pop, button_most_pop_kids
+    return input_no, button_state, button_clear_db, button_most_pop
 
-Consumer(server='kafka', port=9092, topic_name='adjectives_counted', handler=handle_message)
-my_producer = Producer(server='kafka', port=9092)
+Consumer(server=KAFKA_SERVER, port=KAFKA_PORT, topic_name='topic_D', handler=handle_message)
+my_producer = Producer(server=KAFKA_SERVER, port=KAFKA_PORT)
 
-input_no, button_state, button_clear_db, button_most_pop, button_most_pop_kids = prepare_sidebar()
+input_no, button_state, button_clear_db, button_most_pop = prepare_sidebar()
 
-if button_state or input_no:
-    # check if input_no is a number
-    if input_no.isnumeric():
+if button_state:
+    # check if input_no has at least lenght 1
+    if len(input_no) > 0:
         loading = True
         text, counted_words = (None, None)
 
-        if check_if_movie_exists_in_mongodb(input_no) == False:
+        if check_if_movie_exists_in_mongodb_by_title(input_no) == False:
             with st.spinner('Data not in Cache-MongoDB, loading from API :wink:...'):
-                key_bytes = bytes('data', encoding='utf-8')
-                my_producer.send(topic_name='new_movie_id', key=key_bytes, value=input_no)
-                x = threading.Thread(target=check_timeout, args=(10, set_timeout))
+                key_bytes = bytes(NEW_KAFKA_REQUEST_TOPIC, encoding='utf-8')
+                my_producer.send(topic_name=NEW_KAFKA_REQUEST_TOPIC, key=key_bytes, value=f'movie-title={input_no}')
+                x = threading.Thread(target=check_timeout, args=(15, set_timeout))
                 x.start()
                 while loading and not timeout_occurred:
                     time.sleep(0.1)
@@ -147,23 +178,34 @@ if button_state or input_no:
         if timeout_occurred:
             st.error("Timeout occurred. Please try again later.")
         else:
+            loading = False
             time.sleep(1)
-            text, counted_words = load_movie_from_mongodb_if_exists(input_no)
-            if text is None:
-                st.error("No reviews found for movie-id: " + input_no)
-            else:
-                get_wordcloud(text, counted_words)
+            text, counted_words = load_movie_from_mongodb_by_title(input_no)
+            get_wordcloud(text, counted_words)
     else:
-        st.sidebar.error("Please enter a movie-id :point_up:")
+        st.sidebar.error("Please enter a title :point_up:")
 
 if button_most_pop:
-    st.sidebar.warning("Not implemented yet :sweat_smile:")
+    loading = True
+    text, counted_words = (None, None)
 
-if button_most_pop_kids:
-    st.sidebar.warning("Not implemented yet :sweat_smile:")
+    with st.spinner('Loading most popular movie from API :wink:...'):
+        key_bytes = bytes(NEW_KAFKA_REQUEST_TOPIC, encoding='utf-8')
+        my_producer.send(topic_name=NEW_KAFKA_REQUEST_TOPIC, key=key_bytes, value="get_most_pop")
+        x = threading.Thread(target=check_timeout, args=(10, set_timeout))
+        x.start()
+        while loading and not timeout_occurred:
+            time.sleep(0.1)
+
+    if timeout_occurred:
+        st.error("Timeout occurred. Please try again later.")
+    else:
+        time.sleep(1)
+        text, counted_words = load_movie_from_mongodb_by_title(movie_title)
+        get_wordcloud(text, counted_words)
 
 if button_clear_db:
-    client = MongoClient('mongodb_container', 27017, username='root', password='rootpassword')
+    client = get_mongo_client()
     db = client['movies']
     collection = db['reviews']
     collection.delete_many({})
