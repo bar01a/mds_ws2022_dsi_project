@@ -34,3 +34,24 @@ Möglichkeiten um Filme abzufragen:
 2. Get most popular kids movie
 
 -   get_most_pop_kids
+
+### Possible search phrases
+
+#### short search phrases with reviews
+
+-   Matrix
+-   Captain
+-   matrix
+-   matrix revolutions
+-   captain
+
+#### short search without reviews
+
+-   green
+-   forest
+
+#### full movie titles
+
+-   The Matrix
+-   Captain Marvel
+-   The Matrix Revolutions
