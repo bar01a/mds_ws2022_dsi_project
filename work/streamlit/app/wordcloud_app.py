@@ -20,16 +20,19 @@ movie_title = ""
 timeout_occurred = False
 
 # KAFKA CONFIG
-KAFKA_SERVER = 'localhost'
-KAFKA_PORT = 29092
-NEW_KAFKA_REQUEST_TOPIC = 'topic_A'
+KAFKA_SERVER = 'kafka'
+KAFKA_PORT = 9092
+KAFKA_TOPIC_CONSUME = 'adjectives_counted'
+KAFKA_TOPIC_PRODUCE = 'new_movie_title'
 
 # MONGODB CONFIG
 MONGO_SERVER = 'mongodb_container'
-MONGO_SERVER = 'localhost'
 MONGO_PORT = 27017
 MONGO_USERNAME = 'root'
 MONGO_PASSWORD = 'rootpassword'
+
+# GENERAL CONFIG
+TIMEOUT_TIME = 15
 
 def get_mongo_client():
     return MongoClient(MONGO_SERVER, MONGO_PORT, username=MONGO_USERNAME, password=MONGO_PASSWORD)
@@ -109,7 +112,7 @@ def load_movie_from_mongodb_by_title(title, default=(None, None)):
 
 def handle_message(key, value):
     global loading
-    loading = False
+    # loading = False
     write_movie_to_mongodb(value)
     time.sleep(0.5)
     loading = False
@@ -155,7 +158,7 @@ def prepare_sidebar():
     button_clear_db = st.sidebar.button("Clear Cache-MongoDB")
     return input_no, button_state, button_clear_db, button_most_pop
 
-Consumer(server=KAFKA_SERVER, port=KAFKA_PORT, topic_name='topic_D', handler=handle_message)
+Consumer(server=KAFKA_SERVER, port=KAFKA_PORT, topic_name=KAFKA_TOPIC_CONSUME, handler=handle_message)
 my_producer = Producer(server=KAFKA_SERVER, port=KAFKA_PORT)
 
 input_no, button_state, button_clear_db, button_most_pop = prepare_sidebar()
@@ -168,19 +171,21 @@ if button_state:
 
         if check_if_movie_exists_in_mongodb_by_title(input_no) == False:
             with st.spinner('Data not in Cache-MongoDB, loading from API :wink:...'):
-                key_bytes = bytes(NEW_KAFKA_REQUEST_TOPIC, encoding='utf-8')
-                my_producer.send(topic_name=NEW_KAFKA_REQUEST_TOPIC, key=key_bytes, value=f'movie-title={input_no}')
-                x = threading.Thread(target=check_timeout, args=(15, set_timeout))
+                key_bytes = bytes(KAFKA_TOPIC_PRODUCE, encoding='utf-8')
+                my_producer.send(topic_name=KAFKA_TOPIC_PRODUCE, key=key_bytes, value=f'movie-title={input_no}')
+                x = threading.Thread(target=check_timeout, args=(TIMEOUT_TIME, set_timeout))
                 x.start()
                 while loading and not timeout_occurred:
                     time.sleep(0.1)
+        else:
+            movie_title = input_no
 
         if timeout_occurred:
             st.error("Timeout occurred. Please try again later.")
         else:
             loading = False
             time.sleep(1)
-            text, counted_words = load_movie_from_mongodb_by_title(input_no)
+            text, counted_words = load_movie_from_mongodb_by_title(movie_title)
             get_wordcloud(text, counted_words)
     else:
         st.sidebar.error("Please enter a title :point_up:")
@@ -190,9 +195,9 @@ if button_most_pop:
     text, counted_words = (None, None)
 
     with st.spinner('Loading most popular movie from API :wink:...'):
-        key_bytes = bytes(NEW_KAFKA_REQUEST_TOPIC, encoding='utf-8')
-        my_producer.send(topic_name=NEW_KAFKA_REQUEST_TOPIC, key=key_bytes, value="get_most_pop")
-        x = threading.Thread(target=check_timeout, args=(10, set_timeout))
+        key_bytes = bytes(KAFKA_TOPIC_PRODUCE, encoding='utf-8')
+        my_producer.send(topic_name=KAFKA_TOPIC_PRODUCE, key=key_bytes, value="get_most_pop")
+        x = threading.Thread(target=check_timeout, args=(TIMEOUT_TIME, set_timeout))
         x.start()
         while loading and not timeout_occurred:
             time.sleep(0.1)
