@@ -5,6 +5,14 @@ import json
 import sys, getopt
 from Kafka_Helpers import Producer, Consumer
 
+KAFKA_SERVER = 'kafka'
+KAFKA_PORT = 9092
+KAFKA_TOPIC_CONSUME = 'movie_reviews'
+KAFKA_TOPIC_PRODUCE = 'adjectives'
+
+REDIS_PORT = 6379
+REDIS_SERVER = 'redis'
+
 # Natural Language Toolkit already offers many libraries regarding computer linguistics
 # E.g. "from nltk.corpus import wordnet as wn" could be used to categorise the part of speech of a given word
 # For education's sake, we try to create our own list of adjectives using Wordnet and/or a json file
@@ -120,7 +128,7 @@ if len(adjectives) == 0:
 print(list(adjectives)[0:10])
 
 # create connection to redis db
-redis_conn = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
+redis_conn = redis.Redis(host=REDIS_SERVER, port=REDIS_PORT, db=0, decode_responses=True)
 
 if clear_redis:
     # clear and fill redis
@@ -129,7 +137,7 @@ if clear_redis:
 # fill blacklist if necessary
 blacklist = { }
 
-dictionary_producer = Producer('kafka', 9092)
+dictionary_producer = Producer(KAFKA_SERVER, KAFKA_PORT)
 
 def subscribe_handler(key, value):
     print('got')
@@ -142,14 +150,13 @@ def subscribe_handler(key, value):
     [pipe.get(word) for review in reviews for word in review]  # for each word call get on pipe
 
     # send pipe buffer at once and receive all adjectives in reviews
-    adjectives_in_reviews = set(pipe.execute())
-    adjectives_in_reviews.remove(None)
+    adjectives_in_reviews = set(adjective for adjective in pipe.execute() if adjective is not None)
 
     # unfortunately, loop through reviews again otherwise the knowledge of which word belongs to which review is lost
     # If that is unimportant, adjectives_in_reviews should be a list (not a set)
     reviews_words = [[word for word in review if word not in blacklist and word in adjectives_in_reviews] for review in reviews]
 
-    dictionary_producer.send('adjectives', key, {
+    dictionary_producer.send(KAFKA_TOPIC_PRODUCE, key, {
         'movie_id': infos_and_reviews['movie_id'],
         'title': infos_and_reviews['title'],
         'reviews': reviews_words
@@ -158,4 +165,4 @@ def subscribe_handler(key, value):
     print('sent')
 
 
-dictionary_consumer = Consumer('kafka', 9092, 'movie_reviews', subscribe_handler)
+dictionary_consumer = Consumer(KAFKA_SERVER, KAFKA_PORT, KAFKA_TOPIC_CONSUME, subscribe_handler)
