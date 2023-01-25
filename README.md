@@ -2,38 +2,44 @@
 
 Data Science Infrastructure project
 
-### Meeting 2022-01-08
+### Architektur
 
-alles (außer Spark-Script) in docker!
+Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 
-SparkSQL? Wo sollen wir es einbauen?
+1. Streamlit App
+  - Frontend
+2. Movie Script
+  - empfängt Requests für neue Reviews via Kafka von Streamlit
+  - holt Daten von der Movie API
+  - sendet Daten (Movie ID, Titel und Reviews) wieder an Kafka
+3. Dictionary Script
+  - empfängt neue Reviews von Movie Script
+  - filtert Reviews nach Adjektiven
+  - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
+4. Spark Script
+  - empfängt neue Reviews (gefiltert) von Dictionary Script
+  - macht ... Dusan?
+  - macht Wordcount der Adjektive
+  - sendet empfangene Daten + Wordcounts wieder an Kafka
 
-kafka topics
+### Kafka topics
 
-1. new_movie_id (Streamlit --> Movie-Script)
-2. movie_reviews (Movie-Script --> Dict.-Script)
-3. adjectives (Dict.-Script --> Spark-Script)
-4. adjectives_counted (Spark-Script --> Streamlit)
+1. **new_movie_title** (Streamlit App --> Movie Script)
+2. **movie_reviews** (Movie Script --> Dictionary Script)
+3. **adjectives** (Dictionary Script --> Spark Script)
+4. **adjectives_counted** (Spark Script --> Streamlit App)
 
-API Wrapper Libs:
+### Setup
 
--   könnten für Movie-Script hilfreich sein
--   https://www.themoviedb.org/documentation/api/wrappers-libraries
+1. ```docker-compose up -d``` ausführen
+2. Jupyter öffnen und ```!pip install kafka-python``` ausführen
+3. Wordcloud App öffnen (```localhost:8501```)
 
-Möglichkeiten um Filme abzufragen:
+### Features
 
-1. Titel
-
--   movie-title=avatar
--   movie-title=unforgiven
-
-2. Get most popular movie
-
--   get_most_pop
-
-2. Get most popular kids movie
-
--   get_most_pop_kids
+1. Film über Titel abfragen (Freitextfeld)
+2. Most popular Film abfragen
+3. Cache-Tabelle löschen
 
 ### Possible search phrases
 
@@ -44,6 +50,7 @@ Möglichkeiten um Filme abzufragen:
 -   matrix
 -   matrix revolutions
 -   captain
+-   unforgiven
 
 #### short search without reviews
 
@@ -55,3 +62,4 @@ Möglichkeiten um Filme abzufragen:
 -   The Matrix
 -   Captain Marvel
 -   The Matrix Revolutions
+-   Unforgiven
