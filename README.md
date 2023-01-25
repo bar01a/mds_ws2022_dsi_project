@@ -9,6 +9,8 @@ Die Review-Texte sollen auf Adjektive gefieltert werden.
 
 ### Architektur
 
+![Architektur](architecture.png)
+
 Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 
 1. Wordcloud App
