@@ -4,7 +4,8 @@ Data Science Infrastructure project
 
 ### Ziel
 
-
+Webapplikation zum Anzeigen einer Wordcloud für den Inhalt von Film-Reviews.
+Die Review-Texte sollen auf Adjektive gefieltert werden.
 
 ### Architektur
 
@@ -22,9 +23,9 @@ Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
     - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
 4. Spark Script
     - zu Analysezwecken:
-      - vereint die json-Dateien, die eine mögliche Quelle für Adjektive darstellen, und transformiert den Inhalt in eine einzelne json-Datei
-      - ermittelt die Anzahl aller adjektivischen Bedeutungen jedes Wortes
-      - gibt die Anzahl an Wörtern zurück, die zumindest eine adjektivische Bedeutung haben
+        - vereint die json-Dateien, die eine mögliche Quelle für Adjektive darstellen, und transformiert den Inhalt in eine einzelne json-Datei
+        - ermittelt die Anzahl aller adjektivischen Bedeutungen jedes Wortes
+        - gibt die Anzahl an Wörtern zurück, die zumindest eine adjektivische Bedeutung haben
     - empfängt neue Reviews (gefiltert) von Dictionary Script
     - macht Wordcount der Adjektive
     - sendet empfangene Daten + Wordcounts wieder an Kafka
@@ -38,9 +39,9 @@ Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 
 ### Setup
 
-1. ```docker-compose up -d``` ausführen
-2. Jupyter öffnen und ```!pip install kafka-python``` ausführen
-3. Wordcloud App öffnen (```localhost:8501```)
+1. `docker-compose up -d` ausführen
+2. Jupyter öffnen und `!pip install kafka-python` ausführen
+3. Wordcloud App öffnen (`localhost:8501`)
 
 ### Features
 
