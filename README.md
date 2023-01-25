@@ -2,6 +2,12 @@
 
 Data Science Infrastructure project
 
+### Teilnehmer
+
+-   Yvonne Gisser
+-   Dusan Resavac
+-   Roland Bauer
+
 ### Ziel
 
 Webapplikation zum Anzeigen einer Wordcloud für den Inhalt von Film-Reviews.
@@ -43,7 +49,8 @@ Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 
 1. `docker-compose up -d` ausführen
 2. Jupyter öffnen und `!pip install kafka-python` ausführen
-3. Wordcloud App öffnen (`localhost:8501`)
+3. Code chunk **wordcount** in JupyterLab innerhalb des Jupyter/Spark-Containers starten
+4. ([Wordcloud App](http://localhost:8501/) öffnen
 
 ### Features
 
