@@ -50,7 +50,7 @@ Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 1. `docker-compose up -d` ausführen
 2. Jupyter öffnen und `!pip install kafka-python` ausführen
 3. Code chunk **wordcount** in JupyterLab innerhalb des Jupyter/Spark-Containers starten
-4. [Wordcloud App](http://localhost:8501/) öffnen
+4. <a href="http://localhost:8501/" target="_blank">Wordcloud App</a> öffnen
 
 ### Features
 
