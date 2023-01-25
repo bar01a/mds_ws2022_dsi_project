@@ -21,10 +21,10 @@ Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
     - filtert Reviews nach Adjektiven
     - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
 4. Spark Script
-    - Analysezwecke
+    - zu Analysezwecken:
       - vereint die json-Dateien, die eine mögliche Quelle für Adjektive darstellen, und transformiert den Inhalt in eine einzelne json-Datei
-      - zählt die Anzahl aller adjektivischen Bedeutungen jedes Worts
-      - gibt die Anzahl an Wörter zurück, die zumindest eine adjektivische Bedeutung haben
+      - ermittelt die Anzahl aller adjektivischen Bedeutungen jedes Wortes
+      - gibt die Anzahl an Wörtern zurück, die zumindest eine adjektivische Bedeutung haben
     - empfängt neue Reviews (gefiltert) von Dictionary Script
     - macht Wordcount der Adjektive
     - sendet empfangene Daten + Wordcounts wieder an Kafka
