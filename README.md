@@ -2,32 +2,36 @@
 
 Data Science Infrastructure project
 
+### Ziel
+
+
+
 ### Architektur
 
 Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 
-1. Streamlit App
-  - Frontend
+1. Wordcloud App
+    - Frontend
 2. Movie Script
-  - empfängt Requests für neue Reviews via Kafka von Streamlit
-  - holt Daten von der Movie API
-  - sendet Daten (Movie ID, Titel und Reviews) wieder an Kafka
+    - empfängt Requests für neue Reviews via Kafka von Wordcloud
+    - holt Daten von der Movie API
+    - sendet Daten (Movie ID, Titel und Reviews) wieder an Kafka
 3. Dictionary Script
-  - empfängt neue Reviews von Movie Script
-  - filtert Reviews nach Adjektiven
-  - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
+    - empfängt neue Reviews von Movie Script
+    - filtert Reviews nach Adjektiven
+    - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
 4. Spark Script
-  - empfängt neue Reviews (gefiltert) von Dictionary Script
-  - macht ... Dusan?
-  - macht Wordcount der Adjektive
-  - sendet empfangene Daten + Wordcounts wieder an Kafka
+    - empfängt neue Reviews (gefiltert) von Dictionary Script
+    - macht ... Dusan?
+    - macht Wordcount der Adjektive
+    - sendet empfangene Daten + Wordcounts wieder an Kafka
 
 ### Kafka topics
 
-1. **new_movie_title** (Streamlit App --> Movie Script)
+1. **new_movie_title** (Wordcloud App --> Movie Script)
 2. **movie_reviews** (Movie Script --> Dictionary Script)
 3. **adjectives** (Dictionary Script --> Spark Script)
-4. **adjectives_counted** (Spark Script --> Streamlit App)
+4. **adjectives_counted** (Spark Script --> Wordcloud App)
 
 ### Setup
 
