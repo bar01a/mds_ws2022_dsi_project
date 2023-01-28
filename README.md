@@ -47,7 +47,7 @@ Das Spark Script (in der Verzeichnisstruktur unter Spark_script zu finden) wird 
 
 Andererseits empfängt es neue Anfragen (gefiltert) via Kafka vom Wörterbuch Script, macht ein Wordcount der Adjektive und sendet die empfangenen Daten und die Wordcounts wieder an Kafka. 
 
-Um ebenfalls ein besseres Verständnis für Kafka als zentralen Message Broker zu schaffen, werden im kommen Absatz die einzelnen Kafka Topics erläutert: 
+Um ebenfalls ein besseres Verständnis für Kafka als zentralen Message Broker zu schaffen, werden im kommenden Absatz die einzelnen Kafka Topics erläutert: 
 
 ### 1. "new_movie_title"
 
@@ -92,25 +92,23 @@ Das Filme Script extrahiert alle Wörter aus jeder Rezension und behält dabei i
 - **reviews** - ``[[String String, ...], [...], ...]``: Die Liste der Listen mit allen Wörtern pro Rezension.
 
 ### 2. Wörterbuch Script
-Für das Wörterbuch, welches zwischen zwei Worarten unterscheidet, hat der/die End-Benutzer/in die Möglichkeit, zwischen 2 zuverlässigen Quellen zu unterscheiden:
+Für das Wörterbuch, welches zwischen Adjektiven und Nicht-Adjektiven unterscheidet, hat der/die End-Benutzer/in die Möglichkeit, zwischen 2 zuverlässigen Quellen zu wählen:
 
 #### NLTK
-Ein Datensatz, der in mehrere json-Dateien aufgeteilt ist und aus einer Stackoverflow-Antwort stammt (siehe: https://stackoverflow.com/questions/41768215/english-json-dictionary-with-word-word-type-and-definition/54982015#54982015). Die Daten wurden angeblich mit dem Python Natural Language Toolkit generiert, was nach unseren Untersuchungen im Vergleich zu den WORD-Daten zuzutreffen scheint. Dies deutet darauf hin, dass die Daten zuverlässig und vergleichbar mit den WORD-Daten sind (deren Reinheit und Zuverlässigkeit nahezu unbestritten ist).
+Ein Datensatz, der in mehrere json-Dateien aufgeteilt ist und aus einer Stackoverflow-Antwort stammt (siehe: https://stackoverflow.com/questions/41768215/english-json-dictionary-with-word-word-type-and-definition/54982015#54982015). Die Daten wurden angeblich mit dem Python Natural Language Toolkit generiert, was nach unseren Untersuchungen im Vergleich zu den WORDNET-Daten zuzutreffen scheint. Dies deutet darauf hin, dass die Daten zuverlässig und vergleichbar mit den WORDNET-Daten sind (deren Reinheit und Zuverlässigkeit nahezu unbestritten ist).
 
 Die zu verwendenden Daten liegen in einem Dictionary-Format vor, bei dem die Wörter die Schlüssel und die entsprechenden Daten die Werte sind:
 
 - **Dictionary key** - ``String``: Der Schlüssel des Dictionaries enthält das Wort.
-- **MEANINGS** - ``{key: [String, String, [String, ...]]}``: Ein Dictionary, dessen Werte die verschiedenen Bedeutungen darstellen, die ein Wort je nach Kontext haben kann. Der erste Eintrag eines jeden Wertes ist der Part-Of-Speech, der für die Erstellung unseres Wörterbuchs relevant ist. 
+- **MEANINGS** - ``{key: [String, String, [String, ...]]}``: Ein Dictionary, dessen Werte die verschiedenen Bedeutungen darstellen, die ein Wort je nach Kontext haben kann. Der erste Eintrag eines jeden Wertes ist die Wortart, die für die Erstellung unseres Wörterbuchs relevant ist (ob Adjektiv oder nicht). 
 
 #### Wordnet
-Wordnet ist eine große lexikalische Datenbank der englischen Sprache. Die Daten sind in einem proprietären Dateiformat enthalten. Ein kleines Beispiel für eine einzelne Zeile: 00005107 00 s 02 full-length 0 uncut 0 001 & 00004980 a 0000 | complete; "the full-length play". Der Buchstabe am Anfang (in diesem Fall s) kennzeichnet das Wort entweder als "satellite adjective" (Satellitenadjektiv) s oder als "adjective" (Adjektiv) a. Es gibt eine eigene Unterscheidung, die nur von wordnet verwendet wird, um zwischen zwei verschiedenen Arten von Adjektiven zu unterscheiden (siehe: https://stackoverflow.com/questions/18817396/what-part-of-speech-does-s-stand-for-in-wordnet-synsets).
+Wordnet ist eine große lexikalische Datenbank der englischen Sprache. Die Daten sind in einem proprietären Dateiformat enthalten. Ein kleines Beispiel für eine einzelne Zeile: `00005107 00 s 02 full-length 0 uncut 0 001 & 00004980 a 0000 | complete; "the full-length play"`. Der Buchstabe am Anfang (in diesem Fall s) kennzeichnet das Wort entweder als "satellite adjective" (Satellitenadjektiv) *s* oder als "adjective" (Adjektiv) *a*. Es gibt eine eigene Unterscheidung, die nur von wordnet verwendet wird, um zwischen zwei verschiedenen Arten von Adjektiven zu unterscheiden (siehe: https://stackoverflow.com/questions/18817396/what-part-of-speech-does-s-stand-for-in-wordnet-synsets).
 
 ##### Kafka Daten empfangen und senden
-Wenn der Consumer eine neue Nachricht erhält, wird erwartet, dass die Nachricht zu den genannten Daten vom Filme Script gesendet weird. 
+Wenn der Consumer eine neue Nachricht erhält, wird erwartet, dass die Nachricht dem vordefinierten Format, wie es beim Movie Script angegeben wurde, entspricht. 
 
 Die Bewertungen der Daten werden dann so gefiltert, dass nur Adjektive übrig bleiben. Die an Kafka gesendeten Daten sind dann:
-
-Die Bewertungen der Daten werden dann so gefiltert, dass nur Adjektive übrig bleiben. Die Daten werden dann an Kafka gesendet: 
 
 - **movie_id** - ``Integer``: Der eindeutige Bezeichner des Films.
 - **title** - ``String``: Der Originaltitel des Films.
@@ -119,18 +117,19 @@ Die Bewertungen der Daten werden dann so gefiltert, dass nur Adjektive übrig bl
 ### 3. Spark Script
 Die Daten der Map-Reduce-Funktion sind die vom Wörterbuch Script gesendeten Daten. 
 
-Nach dem Zählen der Vorkommen jedes Adjektivs werden die vom Wörterbuch Scrit empfangenen Daten und die folgenden Daten an Kafka gesendet: 
+Nach dem Zählen der Vorkommen jedes Adjektivs werden die vom Wörterbuch Script empfangenen Daten und die folgenden Daten an Kafka gesendet: 
 
 - **counted_words** - ``[[String, Integer], [String, Integer], ...]``: Eine Liste von Listen. Jeder Eintrag in der äußersten Liste ist eine Liste mit dem Wort an der ersten Position und seiner Menge an der zweiten Position, z.B. ``[["impressive", 1], ["different", 3], ...]``
 
 ## Setup
-Um das Projekt einwandfrei zum Laufen zu bringen sind folgende Schritt durchzuführen: 
+Um das Projekt einwandfrei zum Laufen zu bringen sind folgende Schritte durchzuführen: 
 
-1. `docker-compose up -d` ausführen <br>
+1. In der entsprechenden Variable in `work/movie_script/Hidden_Secret.py` einen gültigen `TheMovieDB` API-Key eintragen
+2. `docker-compose up -d` ausführen <br>
 **INFORMATION:** Vor dem Start des Containers kann die Quelle, aus der das Wörterbuch erstellt wird, ausgewählt werden. Dazu muss die Zeichenfolge nach dem Befehl -d unter "dictionary" in der Datei ``docker-compose.yml`` entweder in "wordnet", "wordnet_all" oder in "nltk" geändert werden. Dies kann jedes Mal geändert werden, bevor der Container gestartet wird (er muss nicht neu erstellt werden).
-2. Jupyter öffnen und `!pip install kafka-python` ausführen
-3. Code chunk **wordcount** in JupyterLab innerhalb des Jupyter/Spark-Containers starten
-4. <a href="http://localhost:8501/" target="_blank">Wordcloud App</a> öffnen
+3. Jupyter öffnen und `!pip install kafka-python` ausführen
+4. Code chunk **wordcount** in JupyterLab innerhalb des Jupyter/Spark-Containers starten
+5. <a href="http://localhost:8501/" target="_blank">Wordcloud App</a> öffnen
 
 ## Features
 Hier nochmal die Zusammenfassung der Features dieses Projekts:
@@ -160,3 +159,6 @@ Um die Applikation zu testen, empfehlen wir folgende Eingaben:
 -   Captain Marvel
 -   The Matrix Revolutions
 -   Unforgiven
+
+### Ein Beispiel
+![](Example.png)
