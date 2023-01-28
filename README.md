@@ -122,7 +122,7 @@ Nach dem Zählen der Vorkommen jedes Adjektivs werden die vom Wörterbuch Scrit 
 - **counted_words** - ``[[String, Integer], [String, Integer], ...]``: Eine Liste von Listen. Jeder Eintrag in der äußersten Liste ist eine Liste mit dem Wort an der ersten Position und seiner Menge an der zweiten Position, z.B. ``[["impressive", 1], ["different", 3], ...]``
 
 ## Setup
-Um das Projekt einwandfrei zum Laufen zu bringen sind folgende Schritt durchzuführen: 
+Um das Projekt einwandfrei zum Laufen zu bringen, sind folgende Schritt durchzuführen: 
 
 1. `docker-compose up -d` ausführen <br>
 **INFORMATION:** Vor dem Start des Containers kann die Quelle, aus der das Wörterbuch erstellt wird, ausgewählt werden. Dazu muss die Zeichenfolge nach dem Befehl -d unter "dictionary" in der Datei ``docker-compose.yml`` entweder in "wordnet", "wordnet_all" oder in "nltk" geändert werden. Dies kann jedes Mal geändert werden, bevor der Container gestartet wird (er muss nicht neu erstellt werden).
