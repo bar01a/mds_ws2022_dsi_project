@@ -1,1 +1,1 @@
-myApiKey = {"apiKey": "YOURAPIKEY"}
+moviedb_api_key = "YOUR API KEY"
