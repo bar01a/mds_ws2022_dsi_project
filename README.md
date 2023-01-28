@@ -20,7 +20,7 @@ Die Architektur dieses Projekts ist folgendermaßen aufgebaut:
 
 Dementsprechend gibt es **4 Microservices** mit **Kafka** als zentralen Message Broker. 
 
-Um ein besseres Verständnis für diese Microservices zu schaffen, werden sie in den kommenden Absätzen genauer beschrieben (für mehr Informationen kann außerdem der Code der einzelnen Scripts betrachtet werden - dieser ist durchgehend kommentiert): 
+Um ein besseres Verständnis für diese Microservices zu schaffen, werden sie in den kommenden Absätzen genauer beschrieben (für mehr Informationen kann außerdem das Metadatenmodell sowie der Code der einzelnen Scripts betrachtet werden, welcher durchgehend kommentiert ist): 
 
 ### 1. Streamlit Script (siehe in der Architektur rechts unten)
 
