@@ -35,9 +35,11 @@ MONGO_PASSWORD = 'rootpassword'
 TIMEOUT_TIME = 15
 
 def get_mongo_client():
+    """ helper function to get a mongo client """
     return MongoClient(MONGO_SERVER, MONGO_PORT, username=MONGO_USERNAME, password=MONGO_PASSWORD)
 
 def prepare_data(data, default=(None, None)):
+    """ helper function to prepare data from mongodb for the wordcloud """
     global movie_id, movie_title
     if data is not None:
         movie_id = data['movie_id']
@@ -53,6 +55,7 @@ def prepare_data(data, default=(None, None)):
         return default
 
 def write_movie_to_mongodb(value):
+    """ function to write a movie to mongodb (only if it does not exist yet) """
     global movie_id, movie_title, counter
     o = json.loads(value)
     o['movie_id'] = str(o['movie_id']).replace("'", '').replace('[', '').replace(']', '')
@@ -68,6 +71,7 @@ def write_movie_to_mongodb(value):
         client.close()
 
 def check_if_movie_exists_in_mongodb(movie_id):
+    """ function to check if a movie exists in mongodb (by movie_id) """
     try:
         client = get_mongo_client()
         db = client['movies']
@@ -78,6 +82,7 @@ def check_if_movie_exists_in_mongodb(movie_id):
         return False
 
 def check_if_movie_exists_in_mongodb_by_title(title):
+    """ function to check if a movie exists in mongodb (by title) """
     try:
         client = get_mongo_client()
         db = client['movies']
@@ -88,6 +93,7 @@ def check_if_movie_exists_in_mongodb_by_title(title):
         return False
 
 def load_movie_from_mongodb_if_exists(movie_id, default=(None, None)):
+    """ function to load a movie from mongodb (by movie_id) """
     client = get_mongo_client()
     db = client['movies']
     collection = db['reviews']
@@ -98,6 +104,7 @@ def load_movie_from_mongodb_if_exists(movie_id, default=(None, None)):
         return default
 
 def load_movie_from_mongodb_by_title(title, default=(None, None)):
+    """ function to load a movie from mongodb (by title) """
     global movie_id, movie_title
     client = get_mongo_client()
     db = client['movies']
@@ -111,6 +118,7 @@ def load_movie_from_mongodb_by_title(title, default=(None, None)):
         return default
 
 def handle_message(key, value):
+    """ function to handle a message from kafka """
     global loading
     # loading = False
     write_movie_to_mongodb(value)
@@ -118,6 +126,7 @@ def handle_message(key, value):
     loading = False
 
 def get_wordcloud(text, counted_words):
+    """ function to generate a wordcloud """
     global movie_id, movie_title
     header.title(movie_title)
     subheader.subheader("Wordcloud for movie id: " + str(movie_id))
@@ -139,30 +148,34 @@ def get_wordcloud(text, counted_words):
         st.info(f'No reviews found for "{movie_title}" with id {movie_id}')
 
 def check_timeout(timeout, handler):
+    """ function to check if a timeout occurred """
     time.sleep(timeout)
     handler(True)
 
 def set_timeout(new_state):
+    """ function to set a timeout """
     global timeout_occurred
     timeout_occurred = new_state
 
 def prepare_sidebar():
+    """ function to prepare the sidebar """
     st.sidebar.title("Movie Wordcloud Generator")
     input_no = st.sidebar.text_input("Enter any movie-title :point_down:")
     button_state = st.sidebar.button("Show me the wordcloud!")
-    # st.sidebar.write("(33, 77, 76600)")
     st.sidebar.markdown("---")
     button_most_pop = st.sidebar.button("Show most popular movie")
-    # button_most_pop_kids = st.sidebar.button("Show most popular kids movie")
     st.sidebar.markdown("---")
     button_clear_db = st.sidebar.button("Clear Cache-MongoDB")
     return input_no, button_state, button_clear_db, button_most_pop
 
+# initialize kafka consumer and producer
 Consumer(server=KAFKA_SERVER, port=KAFKA_PORT, topic_name=KAFKA_TOPIC_CONSUME, handler=handle_message)
 my_producer = Producer(server=KAFKA_SERVER, port=KAFKA_PORT)
 
+# prepare sidebar and get inputs
 input_no, button_state, button_clear_db, button_most_pop = prepare_sidebar()
 
+# check if button was clicked
 if button_state:
     # check if input_no has at least lenght 1
     if len(input_no) > 0:
@@ -190,6 +203,7 @@ if button_state:
     else:
         st.sidebar.error("Please enter a title :point_up:")
 
+# check if button_most_pop was clicked
 if button_most_pop:
     loading = True
     text, counted_words = (None, None)
@@ -209,6 +223,7 @@ if button_most_pop:
         text, counted_words = load_movie_from_mongodb_by_title(movie_title)
         get_wordcloud(text, counted_words)
 
+# check if button_clear_db was clicked
 if button_clear_db:
     client = get_mongo_client()
     db = client['movies']
