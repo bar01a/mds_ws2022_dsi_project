@@ -20,7 +20,11 @@ Die Review-Texte sollen auf Adjektive gefieltert werden.
 Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
 
 1. Wordcloud App
-    - Frontend
+    - Die Wordcloud App stellt das Frontend unseres Projektes dar.
+    - Der User kann dort grundsätzlich drei Aktionen setzen:
+        - einen beliebigen Filmtitel eingeben und sich die Wordcloud der dazugehörigen Reviews anzeigen lassen
+        - sich die Wordcloud der Reviews des aktuell populärsten Films anzeigen lassen
+        - die Caching-Datenbank leeren
 2. Movie Script
     - empfängt Requests für neue Reviews via Kafka von Wordcloud
     - holt Daten von der Movie API
