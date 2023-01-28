@@ -20,7 +20,7 @@ Die Architektur dieses Projekts ist folgendermaßen aufgebaut:
 
 Dementsprechend gibt es **4 Microservices** mit **Kafka** als zentralen Message Broker. 
 
-Um ein besseres Verständnis für diese Microservices zu schaffen, werden sie in den kommenden Absätzen genauer beschrieben (für mehr Informationen kann außerdem der Code der einzelnen Scripts betrachtet werden - dieser ist durchgehend kommentiert): 
+Um ein besseres Verständnis für diese Microservices zu schaffen, werden sie in den kommenden Absätzen genauer beschrieben (für mehr Informationen kann außerdem das Metadatenmodell sowie der Code der einzelnen Scripts betrachtet werden, welcher durchgehend kommentiert ist): 
 
 ### 1. Streamlit Script (siehe in der Architektur rechts unten)
 
@@ -122,7 +122,7 @@ Nach dem Zählen der Vorkommen jedes Adjektivs werden die vom Wörterbuch Script
 - **counted_words** - ``[[String, Integer], [String, Integer], ...]``: Eine Liste von Listen. Jeder Eintrag in der äußersten Liste ist eine Liste mit dem Wort an der ersten Position und seiner Menge an der zweiten Position, z.B. ``[["impressive", 1], ["different", 3], ...]``
 
 ## Setup
-Um das Projekt einwandfrei zum Laufen zu bringen sind folgende Schritte durchzuführen: 
+Um das Projekt einwandfrei zum Laufen zu bringen, sind folgende Schritte durchzuführen: 
 
 1. In der entsprechenden Variable in `work/movie_script/Hidden_Secret.py` einen gültigen `TheMovieDB` API-Key eintragen
 2. `docker-compose up -d` ausführen <br>
