@@ -11,7 +11,7 @@ Data Science Infrastructure project
 ### Ziel
 
 Webapplikation zum Anzeigen einer Wordcloud für den Inhalt von Film-Reviews.
-Die Review-Texte sollen auf Adjektive gefieltert werden.
+Die Review-Texte sollen auf Adjektive gefiltert werden.
 
 ### Architektur
 
@@ -26,6 +26,7 @@ Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
     - holt Daten von der Movie API
     - sendet Daten (Movie ID, Titel und Reviews) wieder an Kafka
 3. Dictionary Script
+    - lädt beim Starten des Containers je nach übergebenem Argument (über docker-compose.yml konfigurierbar) Adjektive aus der entsprechenden Quelle
     - empfängt neue Reviews von Movie Script
     - filtert Reviews nach Adjektiven
     - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
