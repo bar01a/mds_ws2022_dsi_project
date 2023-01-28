@@ -1,0 +1,1 @@
+myApiKey = {"apiKey": "YOURAPIKEY"}

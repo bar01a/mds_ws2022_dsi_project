@@ -1,47 +1,66 @@
+# Movie Script
+
+# Short discription of what happens in this script: 
+
+# Accessing and use the "Search Movies", "Get Reviews", "Get Popular" and "Get Details" endpoints of "The Movie Database (TMDB)"-API (https://developers.themoviedb.org/3/getting-started/introduction) to obtain the desired data:
+# * In case the user specifies a movie title: 
+#     - the movie title that was requested
+#     - the corresponding movie ID 
+#     - the corresponding movie reviews
+
+# * In case the user requests the most popular movie:
+#     - the most popular movie title which has the most reviews
+#     - the corresponding movie ID 
+#     - the corresponding movie reviews
+
+# Writing this data into Kafka via the Kafka "movieProducer" & reading the requested movie title or the requested most popular movie via the Kafka "movieConsumer".
+
+# The individual steps:
+
+# Import necessary packages:
 import requests
 import re
 import json
 from Kafka_Helpers import Producer, Consumer
 import ast
+from Hidden_Secret import myApiKey
 
-# KAFKA CONFIG
+# KAFKA CONFIG:
 KAFKA_SERVER = 'kafka'
 KAFKA_PORT = 9092
 KAFKA_TOPIC_CONSUME = 'new_movie_title'
 KAFKA_TOPIC_PRODUCE = 'movie_reviews'
 
+# process data by the function get_data_by_title(title):
 def get_data_by_title(title):
+    # received movie title from consumer (user)
     receivedTitle = title
     
-    apiKey = "105864a59e519ef281a74ca3af6c1b17"
+    apiKey = myApiKey["apiKey"]
     
     # request Search Movies endpoint
-    request1 = requests.get(f"https://api.themoviedb.org/3/search/movie?api_key=105864a59e519ef281a74ca3af6c1b17&query={receivedTitle}")
+    request1 = requests.get(f"https://api.themoviedb.org/3/search/movie?&query={receivedTitle}", {"api_key":apiKey})
     response1 = request1.json()
     result1 = response1['results']
 
     # get id (from the first entry as this is the most similar to the received title)
     movieID = [item['id'] for item in result1][0]    
-    # print(movieID)
     
     # get original_title (from the frist entry, machting the id)
     movieTitle = [item['original_title'] for item in result1][0]
-    # print(movieTitle)
     
     # request Get Reviews endpoint
-    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}/reviews?api_key=105864a59e519ef281a74ca3af6c1b17")
+    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}/reviews?", {"api_key":apiKey})
     response2 = request2.json()
     result2 = response2['results']
-    # print(result2)
     
     # get content (matching the id)
     movieReviews = [item['content'] for item in result2]
     movieReviewsSplitted = [re.sub(r"[^\w \- \  ]", "", item.lower()).split(" ") for item in movieReviews]
-    # print(movieReviewsSplitted)
     
     return movieID, movieTitle, movieReviewsSplitted
 
-# process data by the function get_data_of_most_popular_movie()
+# process data by the function get_data_of_most_popular_movie():
 def get_data_of_most_popular_movie(): 
     
     # get id of most popular movie which has the most reviews 
@@ -51,13 +70,13 @@ def get_data_of_most_popular_movie():
     reviews_of_most_popular_movie = []
     
     # request Get Popular endpoint
-    request1 = requests.get('https://api.themoviedb.org/3/movie/popular?api_key=105864a59e519ef281a74ca3af6c1b17&')
+    request1 = requests.get(f"https://api.themoviedb.org/3/movie/popular?", {"api_key":apiKey})
     response1 = json.loads(request1.text)
 
     for movie in response1['results']:
         movie_ID = movie['id']
         # request Get Reviews endpoint
-        request1 = requests.get(f'https://api.themoviedb.org/3/movie/{movie_ID}/reviews?api_key=105864a59e519ef281a74ca3af6c1b17')
+        request1 = requests.get(f"https://api.themoviedb.org/3/movie/{movie_ID}/reviews?", {"api_key":apiKey})
         response1 = json.loads(request1.text)
         # get id of most popular movie with most reviews
         if len(response1['results']) > maxReviews:
@@ -66,12 +85,11 @@ def get_data_of_most_popular_movie():
             reviews_of_most_popular_movie = response1['results']
         
     # request Get Details endpoint (with the id that was just defined)
-    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}?api_key=105864a59e519ef281a74ca3af6c1b17&language=en-US")
+    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}?&language=en-US", {"api_key":apiKey})
     response2 = request2.json()
     
     # get original_title (matching the id)
     movieTitle = [response2['original_title']]
-    # print(movieTitle)
     
     # request Get Reviews endpoint
     result = reviews_of_most_popular_movie
@@ -79,12 +97,10 @@ def get_data_of_most_popular_movie():
     # get content (matching the id)
     movieReviews = [item['content'] for item in result]
     movieReviewsSplitted = [re.sub(r"[^\w \- \  ]", "", item.lower()).split(" ") for item in movieReviews]
-    # print(movieReviews)
 
     return movieID, movieTitle, movieReviewsSplitted
 
 # Write processed data into Kafka:
-
 # open Producer and write data into Kafka
 movieProducer = Producer(KAFKA_SERVER, KAFKA_PORT)
 
@@ -102,5 +118,6 @@ def handler(key, value):
         "reviews": movie_reviews
     }))
 
+# Read data from Kafka:    
 # open Consumer read data from Kafka
 movieConsumer = Consumer(KAFKA_SERVER, KAFKA_PORT, KAFKA_TOPIC_CONSUME, handler)
