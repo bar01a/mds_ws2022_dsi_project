@@ -110,8 +110,6 @@ Wenn der Consumer eine neue Nachricht erhält, wird erwartet, dass die Nachricht
 
 Die Bewertungen der Daten werden dann so gefiltert, dass nur Adjektive übrig bleiben. Die an Kafka gesendeten Daten sind dann:
 
-Die Bewertungen der Daten werden dann so gefiltert, dass nur Adjektive übrig bleiben. Die Daten werden dann an Kafka gesendet: 
-
 - **movie_id** - ``Integer``: Der eindeutige Bezeichner des Films.
 - **title** - ``String``: Der Originaltitel des Films.
 - **reviews** - ``[[String String, ...], [...], ...]``: Eine Liste von Listen mit einzelnen Adjektiven. 
