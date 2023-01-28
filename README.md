@@ -1,54 +1,68 @@
-# mds_ws2022_dsi_project
+# TLDR; Filmrezensionen | 20-Wort-Konsensus
 
-Data Science Infrastructure project
+*Dokumentation zum Abschlussprojekt zur LV "Data Science Infrastructure"*
 
-### Teilnehmer
+### Team
 
 -   Yvonne Gisser
 -   Dusan Resavac
 -   Roland Bauer
 
-### Ziel
+### Ziel / Ergebnis
 
-Webapplikation zum Anzeigen einer Wordcloud für den Inhalt von Film-Reviews.
-Die Review-Texte sollen auf Adjektive gefiltert werden.
+Das Ziel / Ergebnis dieses Projekts besteht darin, Filmrezensionen auf eine einfache sowie anschauliche Art zusammenzufassen, sodass der Konsens verschiedener Meinungen auf einem einzigen Blick ersichtbar ist. Dies wird anhand einer Webapplikation zum Anzeigen einer Wordcloud realisiert, welche die, aus Filmrezensionen am häufigst vorkommenden, Adjektive darstellt (wobei max. die 20 am häufigst vorkommenden Adjektive verwendet werden, um eine einfache Lesbarkeit der Wordcloud sicherzustellen).
 
 ### Architektur
 
+Die Architektur dieses Projekts ist folgendermaßen aufgebaut:
+
 ![Architektur](architecture.png)
 
-Insgesamt 4 **Microservices** mit **Kafka** als zentralen Message Broker:
+Dementsprechend gibt es **4 Microservices** mit **Kafka** als zentralen Message Broker. 
 
-1. Wordcloud App
-    - Die Wordcloud App stellt das Frontend unseres Projektes dar.
-    - Der User kann dort grundsätzlich drei Aktionen setzen:
-        - einen beliebigen Filmtitel eingeben und sich die Wordcloud der dazugehörigen Reviews anzeigen lassen
-        - sich die Wordcloud der Reviews des aktuell populärsten Films anzeigen lassen
-        - die Caching-Datenbank leeren
-2. Movie Script
-    - empfängt Requests für neue Reviews via Kafka von Wordcloud
-    - holt Daten von der Movie API
-    - sendet Daten (Movie ID, Titel und Reviews) wieder an Kafka
-3. Dictionary Script
-    - lädt beim Starten des Containers je nach übergebenem Argument (über docker-compose.yml konfigurierbar) Adjektive aus der entsprechenden Quelle
-    - empfängt neue Reviews von Movie Script
-    - filtert Reviews nach Adjektiven
-    - sendet gefilterte Reviews gemeinsam mit Movie ID und Titel wieder an Kafka
-4. Spark Script
-    - zu Analysezwecken:
-        - vereint die json-Dateien, die eine mögliche Quelle für Adjektive darstellen, und transformiert den Inhalt in eine einzelne json-Datei
-        - ermittelt die Anzahl aller adjektivischen Bedeutungen jedes Wortes
-        - gibt die Anzahl an Wörtern zurück, die zumindest eine adjektivische Bedeutung haben
-    - empfängt neue Reviews (gefiltert) von Dictionary Script
-    - macht Wordcount der Adjektive
-    - sendet empfangene Daten + Wordcounts wieder an Kafka
+Um ein besseres Verständnis für diese Microservices zu schaffen, werden sie in den kommenden Absätzen genauer beschrieben: 
 
-### Kafka topics
+**1. Streamlit Script (siehe in der Architektur rechts unten):**
 
-1. **new_movie_title** (Wordcloud App --> Movie Script)
-2. **movie_reviews** (Movie Script --> Dictionary Script)
-3. **adjectives** (Dictionary Script --> Spark Script)
-4. **adjectives_counted** (Spark Script --> Wordcloud App)
+Das Streamlit Script (in der Verzeichnisstruktur unter worldcloud_app zu finden) stellt das Frontend des Projekts dar. Dabei kann der/die Endbenutzer*in 3 verschiedene Aktionen ausführen:
+   - Er/Sie kann einen beliebigen Filmtitel eingeben und sich somit die Wordcloud der dazugehörigen Filmrezensionen anzeigen lassen,  
+   - sich die Wordcloud der Filmrezensionen des aktuell populärsten Films anzeigen lassen (dieser wird täglich aktualisiert) und
+   - die Caching-Datenbank leeren.
+       
+**2. Filme Script (siehe in der Architektur rechts oben):**
+
+Das Filme Script (in der Verzeichnisstruktur unter movie_script zu finden) empfängt die Anfragen für neue Filmrezensionen via Kafka vom Streamlit Script, holt sich die notwendigen Daten (= movie title, movie ID und movie reviews) aus der Movie DB und sendet diese zurück an Kafka.
+   
+**3. Wörterbuch Script (siehe in der Architektur links oben):**
+
+Das Wörterbuch Script (in der Verzeichnisstruktur unter dictionary_script zu finden) lädt beim Starten des Containers, je nach übergebenem Argument (über docker-compose.yml konfigurierbar), die Adjektive aus der entsprechenden Quelle, empfängt die Anfragen via Kafka vom Filme Script, filtert die Filmrezensionen nach deren Adjektiven und sendet schließlich die gefilterten Rezensionen gemeinsam mit der movie ID und dem movie titel zurück an Kafka.
+
+**4. Spark Script (siehe in der Architektur links unten):**
+
+Das Spark Script (in der Verzeichnisstruktur unter Spark_script zu finden) wird für einerseits für Analysezwecke verwendet, dh. es
+   - vereint die json-Dateien, die eine mögliche Quelle für Adjektive darstellen und transformiert den Inhalt in eine einzelne json-Datei, 
+   - ermittelt die Anzahl aller adjektivischer Bedeutungen jedes Wortes und
+   - gibt die Anzahl an Wörtern zurück, die zumindest eine adjektivische Bedeutung haben.
+
+Andererseits empfängt es aber auch neue Anfragen (gefiltert) via Kafka vom Wörterbuch Script, macht ein Wordcount der Adjektive und sendet die empfangenen Daten und die Wordcounts wieder an Kafka. 
+
+Um ebenfalls ein besseres Verständnis für Kafka als zentralen Message Broker zu schaffen, werden im kommen Absatz die einzelnen Kafka Topics beschrieben: 
+
+**1. "new_movie_title"**: 
+
+Streamlit Script --> Filme Script
+
+**2. "movie_reviews"**: 
+
+Filme Script --> Wörterbuch Script 
+
+**3. "adjectives"**: 
+
+Wörterbuch Script --> Spark Script 
+
+**4. "adjectives_counted"**: 
+
+Spark Script --> Streamlit Script
 
 ### Setup
 
