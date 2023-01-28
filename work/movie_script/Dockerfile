@@ -16,6 +16,7 @@ WORKDIR /movie-script
 COPY Kafka_Helpers.py Kafka_Helpers.py
 COPY movie_script.py movie_script.py
 COPY requirements.txt requirements.txt
+COPY Hidden_Secret.py Hidden_Secret.py
 RUN pip3 install -r requirements.txt
 
 ENTRYPOINT ["python", "movie_script.py"]

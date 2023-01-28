@@ -23,6 +23,7 @@ import re
 import json
 from Kafka_Helpers import Producer, Consumer
 import ast
+from Hidden_Secret import myApiKey
 
 # KAFKA CONFIG:
 KAFKA_SERVER = 'kafka'
@@ -35,10 +36,10 @@ def get_data_by_title(title):
     # received movie title from consumer (user)
     receivedTitle = title
     
-    apiKey = "105864a59e519ef281a74ca3af6c1b17"
+    apiKey = myApiKey["apiKey"]
     
     # request Search Movies endpoint
-    request1 = requests.get(f"https://api.themoviedb.org/3/search/movie?api_key=105864a59e519ef281a74ca3af6c1b17&query={receivedTitle}")
+    request1 = requests.get(f"https://api.themoviedb.org/3/search/movie?&query={receivedTitle}", {"api_key":apiKey})
     response1 = request1.json()
     result1 = response1['results']
 
@@ -49,7 +50,7 @@ def get_data_by_title(title):
     movieTitle = [item['original_title'] for item in result1][0]
     
     # request Get Reviews endpoint
-    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}/reviews?api_key=105864a59e519ef281a74ca3af6c1b17")
+    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}/reviews?", {"api_key":apiKey})
     response2 = request2.json()
     result2 = response2['results']
     
@@ -69,13 +70,13 @@ def get_data_of_most_popular_movie():
     reviews_of_most_popular_movie = []
     
     # request Get Popular endpoint
-    request1 = requests.get('https://api.themoviedb.org/3/movie/popular?api_key=105864a59e519ef281a74ca3af6c1b17&')
+    request1 = requests.get(f"https://api.themoviedb.org/3/movie/popular?", {"api_key":apiKey})
     response1 = json.loads(request1.text)
 
     for movie in response1['results']:
         movie_ID = movie['id']
         # request Get Reviews endpoint
-        request1 = requests.get(f'https://api.themoviedb.org/3/movie/{movie_ID}/reviews?api_key=105864a59e519ef281a74ca3af6c1b17')
+        request1 = requests.get(f"https://api.themoviedb.org/3/movie/{movie_ID}/reviews?", {"api_key":apiKey})
         response1 = json.loads(request1.text)
         # get id of most popular movie with most reviews
         if len(response1['results']) > maxReviews:
@@ -84,7 +85,7 @@ def get_data_of_most_popular_movie():
             reviews_of_most_popular_movie = response1['results']
         
     # request Get Details endpoint (with the id that was just defined)
-    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}?api_key=105864a59e519ef281a74ca3af6c1b17&language=en-US")
+    request2 = requests.get(f"https://api.themoviedb.org/3/movie/{movieID}?&language=en-US", {"api_key":apiKey})
     response2 = request2.json()
     
     # get original_title (matching the id)
